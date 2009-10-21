@@ -23,7 +23,11 @@ module Noodler
     end
 
     def run
-      construct_graph.run
+      root = construct_graph
+      root.run
+      root.callback do
+        succeed
+      end
       self
     end
 

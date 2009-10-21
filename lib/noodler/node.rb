@@ -1,5 +1,7 @@
 module Noodler
   class Node
+    include EM::Deferrable
+
     attr_accessor :parent
 
     def initialize(type, strategy = nil, &strategy_block)
@@ -8,11 +10,18 @@ module Noodler
       end
       @synchronous = (type == :sync)
       @children = []
+      @children_complete = 0
       @strategy = strategy || strategy_block
     end
 
     def <<(child)
       child.parent = self
+      child.callback do
+        @children_complete += 1
+        if @children_complete == @children.size
+          succeed
+        end
+      end
       @children << child
     end
 
@@ -39,8 +48,12 @@ module Noodler
     end
 
     def run_children
-      @children.each do |child|
-        child.run(@output)
+      if @children.any?
+        @children.each do |child|
+          child.run(@output)
+        end
+      else
+        succeed
       end
     end
   end

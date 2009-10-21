@@ -27,5 +27,8 @@ end
 EM.run {
   1.times {
     job = Download.new({}).run
+    job.callback do
+      puts "Finished everything!"
+    end
   }
 }
