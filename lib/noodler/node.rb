@@ -16,13 +16,14 @@ module Noodler
       @children << child
     end
 
-    def run
-      @synchronous ? run_sync : run_async
+    def run(input = nil)
+      @synchronous ? run_sync(input) : run_async(input)
     end
 
-    def run_async
-      deferrable = @strategy.call
-      deferrable.callback do
+    def run_async(input)
+      deferrable = @strategy.call(input)
+      deferrable.callback do |output|
+        @output = output
         puts "Deferrable strategy succeeded"
         EM.next_tick(method(:run_children))
       end
@@ -31,15 +32,15 @@ module Noodler
       end
     end
 
-    def run_sync
+    def run_sync(input)
       EM.defer \
-        lambda { @strategy.call },
+        lambda { @output = @strategy.call(input); },
         lambda { EM.next_tick(method(:run_children)) }
     end
 
     def run_children
       @children.each do |child|
-        child.run
+        child.run(@output)
       end
     end
   end
