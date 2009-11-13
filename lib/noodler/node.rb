@@ -2,7 +2,7 @@ module Noodler
   class Node
     include EM::Deferrable
 
-    attr_accessor :parent
+    # attr_accessor :parent
 
     def initialize(type, strategy = nil, &strategy_block)
       unless type == :sync || type == :async
@@ -15,7 +15,7 @@ module Noodler
     end
 
     def <<(child)
-      child.parent = self
+      # child.parent = self
       child.callback do
         @children_complete += 1
         if @children_complete == @children.size
