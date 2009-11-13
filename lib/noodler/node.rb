@@ -22,6 +22,9 @@ module Noodler
           succeed
         end
       end
+      child.errback do |e|
+        fail e
+      end
       @children << child
     end
 
@@ -39,11 +42,20 @@ module Noodler
       deferrable.errback do
         puts "Deferrable strategy failed"
       end
+    rescue => e
+      fail e
     end
 
     def run_sync(input)
       EM.defer \
-        lambda { @output = @strategy.call(input); },
+        lambda {
+          begin
+            @output = @strategy.call(input);
+          rescue => e
+            puts "exception caught in thread - propagating back"
+            fail e
+          end
+        },
         lambda { EM.next_tick(method(:run_children)) }
     end
 

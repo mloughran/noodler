@@ -28,6 +28,9 @@ module Noodler
       root.callback do
         succeed
       end
+      root.errback do |e|
+        fail e
+      end
       self
     end
 

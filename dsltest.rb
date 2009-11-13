@@ -30,5 +30,9 @@ EM.run {
     job.callback do
       puts "Finished everything!"
     end
+    job.errback do |e|
+      # raise e
+      puts "Job failed with exception #{e.class}, #{e.message}"
+    end
   }
 }
