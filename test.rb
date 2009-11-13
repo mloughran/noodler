@@ -1,31 +1,58 @@
-require 'node'
+require 'rubygems'
+require 'eventmachine'
+$:.unshift('lib')
+require 'noodler'
+
+Node = Noodler::Node
 
 def create_deferrable(id)
   deferrable = EM::DefaultDeferrable.new
   deferrable.callback do
-    puts "Finished node #{id}"
+    puts "Finished node #{id} in thread #{Thread.current.object_id}"
   end
   EM::Timer.new(1) do
-    deferrable.succeed
+    deferrable.succeed "finished #{id}"
   end
   deferrable
 end
 
+EM.threadpool_size = 1
+
 EM.run {
-  n1 = Node.new do
+  n1 = Node.new(:async) do
     create_deferrable(1)
   end
   
-  n2 = Node.new do
-    create_deferrable(2)
+  n2 = Node.new(:sync) do
+    puts "About to sleep for a while"
+    sleep 2
+    puts "Finished sleeping in thread #{Thread.current.object_id}"
   end
   
-  n3 = Node.new do
+  n3 = Node.new(:async) do
     create_deferrable(3)
+  end
+  
+  n4 = Node.new(:sync) do |input|
+    puts "About to sleep for a while after getting input #{input}"
+    sleep 2
+    puts "Finished sleeping in thread #{Thread.current.object_id}"
+  end
+  
+  n5 = Node.new(:async) do
+    create_deferrable(5)
+  end
+  
+  n6 = Node.new(:async) do
+    create_deferrable(6)
   end
   
   n1 << n2
   n1 << n3
+  n1 << n4
   
-  n1.run
+  n2 << n5
+  n3 << n6
+  
+  n1.run(nil)
 }
