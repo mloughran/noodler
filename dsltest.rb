@@ -28,8 +28,11 @@ class Download < Noodler::Job
     "Report done"
   end
 
-  node :another, :threaded do |node, result|
+  node :another, :sync do |node, result|
     puts result
+
+    puts "Sleeping in the reactor thread is bad"
+    sleep 1
 
     node.add_child(:yet_more)
 
@@ -37,21 +40,24 @@ class Download < Noodler::Job
   end
 
   node :yet_more, :threaded do |node, result|
+    puts "But sleeping in a thread is ok"
+    sleep 1
+
     puts result
   end
 end
 
 EM.run {
-  1.times {
+  2.times do |i|
     job = Download.new({}).run
     job.callback do
-      puts "Finished everything!"
+      puts "Finished job #{i}"
     end
     job.errback do |e|
       # raise e
       puts "Job failed with exception #{e.class}, #{e.message}"
     end
-  }
+  end
 
   Signal.trap('INT') { EM.stop }
 }

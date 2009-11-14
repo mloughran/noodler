@@ -5,7 +5,7 @@ module Noodler
     # attr_accessor :parent
     attr_accessor :job
 
-    VALID_TYPES = [:evented, :threaded]
+    VALID_TYPES = [:sync, :evented, :threaded]
 
     def initialize(run_method, strategy = nil, &strategy_block)
       unless VALID_TYPES.include?(run_method)
@@ -39,11 +39,20 @@ module Noodler
 
     def run(input = nil)
       case @run_method
+      when :sync: run_sync(input)
       when :evented: run_evented(input)
       when :threaded: run_threaded(input)
       else
         raise "#{@run_method} not supported"
       end
+    end
+
+    def run_sync(input)
+      @output = @strategy.call(self, input)
+      EM.next_tick(method(:run_children))
+    rescue => e
+      puts "Exception in sync code"
+      fail e
     end
 
     def run_evented(input)
