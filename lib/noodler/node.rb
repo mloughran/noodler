@@ -3,6 +3,7 @@ module Noodler
     include EM::Deferrable
 
     # attr_accessor :parent
+    attr_accessor :job
 
     def initialize(type, strategy = nil, &strategy_block)
       unless type == :sync || type == :async
@@ -16,6 +17,7 @@ module Noodler
 
     def <<(child)
       # child.parent = self
+      child.job = self.job
       child.callback do
         @children_complete += 1
         if @children_complete == @children.size
@@ -28,12 +30,17 @@ module Noodler
       @children << child
     end
 
+    def add_child(name)
+      node = job.create_named_node(name)
+      self << node
+    end
+
     def run(input = nil)
       @synchronous ? run_sync(input) : run_async(input)
     end
 
     def run_async(input)
-      deferrable = @strategy.call(input)
+      deferrable = @strategy.call(self, input)
       deferrable.callback do |output|
         @output = output
         puts "Deferrable strategy succeeded"
@@ -50,7 +57,7 @@ module Noodler
       EM.defer \
         lambda {
           begin
-            @output = @strategy.call(input);
+            @output = @strategy.call(self, input);
           rescue => e
             puts "exception caught in thread - propagating back"
             fail e
