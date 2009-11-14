@@ -54,16 +54,15 @@ module Noodler
     end
 
     def run_sync(input)
-      EM.defer \
-        lambda {
-          begin
-            @output = @strategy.call(self, input);
-          rescue => e
-            puts "exception caught in thread - propagating back"
-            fail e
-          end
-        },
-        lambda { EM.next_tick(method(:run_children)) }
+      EM.defer do
+        begin
+          @output = @strategy.call(self, input)
+          EM.next_tick(method(:run_children))
+        rescue => e
+          puts "exception caught in thread - propagating back"
+          fail e
+        end
+      end
     end
 
     def run_children
