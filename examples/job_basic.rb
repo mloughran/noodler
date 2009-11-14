@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'eventmachine'
-$:.unshift('lib')
+$:.unshift(File.dirname(__FILE__) + '/../lib')
 require 'noodler'
 
 class Download < Noodler::Job
