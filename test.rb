@@ -16,34 +16,34 @@ def create_deferrable(id)
   deferrable
 end
 
-EM.threadpool_size = 1
+EM.threadpool_size = 5
 
 EM.run {
-  n1 = Node.new(:async) do
+  n1 = Node.new(:evented) do
     create_deferrable(1)
   end
   
-  n2 = Node.new(:sync) do
+  n2 = Node.new(:threaded) do
     puts "About to sleep for a while"
     sleep 2
     puts "Finished sleeping in thread #{Thread.current.object_id}"
   end
   
-  n3 = Node.new(:async) do
+  n3 = Node.new(:evented) do
     create_deferrable(3)
   end
   
-  n4 = Node.new(:sync) do |input|
+  n4 = Node.new(:threaded) do |node, input|
     puts "About to sleep for a while after getting input #{input}"
     sleep 2
     puts "Finished sleeping in thread #{Thread.current.object_id}"
   end
   
-  n5 = Node.new(:async) do
+  n5 = Node.new(:evented) do
     create_deferrable(5)
   end
   
-  n6 = Node.new(:async) do
+  n6 = Node.new(:evented) do
     create_deferrable(6)
   end
   

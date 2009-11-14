@@ -6,7 +6,7 @@ require 'noodler'
 class Download < Noodler::Job
   run [:download, :report]
 
-  node :download, :async do |node, params|
+  node :download, :evented do |node, params|
     puts "Downloading..."
     # raise 'foo'
     deferrable = EM::DefaultDeferrable.new
@@ -19,7 +19,7 @@ class Download < Noodler::Job
     deferrable
   end
 
-  node :report, :sync do |node, status, body|
+  node :report, :threaded do |node, status, body|
     puts "I got status code #{status} and body '#{body}'"
 
     node.add_child(:another)
@@ -28,7 +28,7 @@ class Download < Noodler::Job
     "Report done"
   end
 
-  node :another, :sync do |node, result|
+  node :another, :threaded do |node, result|
     puts result
 
     node.add_child(:yet_more)
@@ -36,7 +36,7 @@ class Download < Noodler::Job
     "Another result"
   end
 
-  node :yet_more, :sync do |node, result|
+  node :yet_more, :threaded do |node, result|
     puts result
   end
 end

@@ -5,11 +5,13 @@ module Noodler
     # attr_accessor :parent
     attr_accessor :job
 
-    def initialize(type, strategy = nil, &strategy_block)
-      unless type == :sync || type == :async
-        raise ArgumentError, "type must be :sync or :async"
+    VALID_TYPES = [:evented, :threaded]
+
+    def initialize(run_method, strategy = nil, &strategy_block)
+      unless VALID_TYPES.include?(run_method)
+        raise ArgumentError, "type must be #{VALID_TYPES.join(', ')}"
       end
-      @synchronous = (type == :sync)
+      @run_method = run_method
       @children = []
       @children_complete = 0
       @strategy = strategy || strategy_block
@@ -36,10 +38,15 @@ module Noodler
     end
 
     def run(input = nil)
-      @synchronous ? run_sync(input) : run_async(input)
+      case @run_method
+      when :evented: run_evented(input)
+      when :threaded: run_threaded(input)
+      else
+        raise "#{@run_method} not supported"
+      end
     end
 
-    def run_async(input)
+    def run_evented(input)
       deferrable = @strategy.call(self, input)
       deferrable.callback do |output|
         @output = output
@@ -53,7 +60,7 @@ module Noodler
       fail e
     end
 
-    def run_sync(input)
+    def run_threaded(input)
       EM.defer do
         begin
           @output = @strategy.call(self, input)
